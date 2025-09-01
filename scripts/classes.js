@@ -55,7 +55,12 @@ export class GameObject {
         if (typeof param == 'number') return this.objects.filter(obj => obj.id == param)[0];
         else if (typeof param == 'string') return this.objects.filter(obj => obj.name == param);
         else if (typeof param == 'object') return this.objects.filter(obj => obj === param);
-    }
+    }    
+}
 
-    
+export const hud = {
+    post: function(message, clear = false) {
+        if (!clear) document.getElementById('hud').innerHTML += '\n' + message;
+        else if (clear) document.getElementById('hud').innerHTML = message;
+    }
 }
