@@ -14,17 +14,36 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('grid').style.gridTemplateColumns = `repeat(${game.scale[0]}, 1fr)`;
     document.getElementById('grid').style.gridTemplateRows = 'auto';
 
-    setInterval(() => {
-        const screen = document.getElementById('grid');
+    const screen = document.getElementById('grid');
+    
+    for (let i = 1; i <= game.scale[0]*game.scale[1]; i++) {
+        screen.insertAdjacentHTML("beforeend", `<div class="cell" id="${i}"></div>`);
 
-        screen.innerHTML = '';
+        document.getElementById(`${i}`).addEventListener('click', () => {
+            events.onClickRegistry.forEach(ev => {
+                if (typeof ev[0] == 'number') {
+                    if (i == Vector2.toNumber(GameObject.getObjects(ev[0]).location)) ev[1]();
+                }
+                else if (typeof ev[0] == 'string') {
+                    if (GameObject.getObjects(ev[0]).map(obj => Vector2.toNumber(obj.location)).includes(i)) ev[1]();
+                }
+                else if (ev[0].x != undefined && ev[0].y != undefined) {
+                    if (i == Vector2.toNumber(ev[0])) ev[1]();
+                }
+                else if (typeof ev[0] == 'object') {
+                    if (i == Vector2.toNumber(ev[0].location)) ev[1]();
+                }
+            })
+        })
+    }
+
+    setInterval(() => {
         for (let i = 1; i <= game.scale[0]*game.scale[1]; i++) {
             let sprite = new Sprite('X', 'grey', -100);
 
             const objs = GameObject.objects.filter(obj => obj.sprite.layer == Math.max(...GameObject.objects.filter(obj => Vector2.toNumber(obj.location) == i).map(obj => obj.sprite.layer)));
             if (objs.length > 0) sprite = objs[0].sprite;
-
-            screen.innerHTML += `<div id="${i}" class="cell">${sprite.symbol}</div>`;
+            document.getElementById(`${i}`).innerHTML = sprite.symbol;
             document.getElementById(`${i}`).style.color = sprite.color;
         }
     }, Math.round(1000/game.fps))

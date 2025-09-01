@@ -30,7 +30,7 @@ export class GameObject {
         GameObject.objectCount++;
         this.id = GameObject.objectCount;
 
-        this.teleport = function(loc) {
+        this.moveTo = function(loc) {
             if (loc.x < 1|| loc.x > game.scale[0]) return;
             if (loc.y < 1|| loc.y > game.scale[1]) return;
 

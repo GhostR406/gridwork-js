@@ -17,7 +17,18 @@ export const onMouse = {
         onMouseRegistry.push([func, button == 'left' ? 0 : 2, this.id, hold]);
         return this.id;
     },
-    unsubscribe: function(id) { onMouseRegistry = onMouseRegistry.filter(ev => ev[1] != id) }
+    unsubscribe: function(id) { onMouseRegistry = onMouseRegistry.filter(ev => ev[2] != id) }
+}
+
+export let onClickRegistry = [];
+export const onClick = {
+    id: 0,
+    subscribe: function(obj, func) {
+        this.id++;
+        onClickRegistry.push([obj, func, this.id]);
+        return this.id;
+    },
+    unsubscribe: function(id) { onClickRegistry = onClickRegistry.filter(ev => ev[2] != id) }
 }
 
 export let onCollideRegistry = [];
@@ -28,5 +39,5 @@ export const onCollide = {
         onCollideRegistry.push([obj1, obj2, func, this.id, once, false]);
         return this.id;
     },
-    unsubscribe: function(id) { onCollideRegistry = onCollideRegistry.filter(ev => ev[2] != id) }
+    unsubscribe: function(id) { onCollideRegistry = onCollideRegistry.filter(ev => ev[3] != id) }
 }
