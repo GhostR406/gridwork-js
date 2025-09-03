@@ -33,7 +33,8 @@ export function start() {
     hud.post(`HEALTH: ${player.health.current} / ${player.health.max}`, true);
 
     for (let i = 1; i <= 20; i++) {
-        let symbol = Math.random() > 0.5 ? '#' : '@';
-        new GameObject('wall', new Sprite(symbol, 'lightgray', 1), new Vector2(Math.ceil(Math.random()*15), Math.ceil(Math.random()*10)), true)
+        let a = Math.random() > 0.5 ? '#' : '@';
+        new GameObject('wall', new Sprite(a, 'lightgray', 1), new Vector2(Math.ceil(Math.random()*15), Math.ceil(Math.random()*10)), true)
     }
+    console.log(GameObject.objects.map(obj => obj.sprite.symbol));
 }

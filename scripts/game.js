@@ -25,33 +25,49 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(`${i}`).addEventListener('click', () => {
             events.onClickRegistry.forEach(ev => {
                 if (typeof ev[0] == 'number') {
-                    if (i == Vector2.toNumber(GameObject.getObjects(ev[0]).location)) ev[1]();
+                    if (i == GameObject.getObjects(ev[0]).location.toNumber()) ev[1]();
                 }
                 else if (typeof ev[0] == 'string') {
-                    if (GameObject.getObjects(ev[0]).map(obj => Vector2.toNumber(obj.location)).includes(i)) ev[1]();
+                    if (GameObject.getObjects(ev[0]).map(obj => obj.location.toNumber()).includes(i)) ev[1]();
                 }
                 else if (ev[0].x != undefined && ev[0].y != undefined) {
-                    if (i == Vector2.toNumber(ev[0])) ev[1]();
+                    if (i == ev[0].toNumber()) ev[1]();
                 }
                 else if (typeof ev[0] == 'object') {
-                    if (i == Vector2.toNumber(ev[0].location)) ev[1]();
+                    if (i == ev[0].location.toNumber()) ev[1]();
                 }
             })
         })
     }
 
     setInterval(() => {
-        if (game.paused) return;
+        const width = game.scale[0];
+        const total = width * game.scale[1];
 
-        for (let i = 1; i <= game.scale[0]*game.scale[1]; i++) {
-            let sprite = new Sprite('X', 'grey', -100);
-
-            const objs = GameObject.objects.filter(obj => obj.sprite.layer == Math.max(...GameObject.objects.filter(obj => Vector2.toNumber(obj.location) == i).map(obj => obj.sprite.layer)));
-            if (objs.length > 0) sprite = objs[0].sprite;
-            document.getElementById(`${i}`).innerHTML = sprite.symbol;
-            document.getElementById(`${i}`).style.color = sprite.color;
+        // clear to default
+        for (let i = 1; i <= total; i++) {
+            const cell = document.getElementById(String(i));
+            cell.textContent = 'X';
+            cell.style.color = 'grey';
         }
-    }, Math.round(1000/game.fps))
+
+        // choose top object per cell
+        const topByIndex = new Map(); // index -> obj
+        for (const obj of GameObject.objects) {
+            const idx = obj.location.toNumber(width);
+            const cur = topByIndex.get(idx);
+            if (!cur || obj.sprite.layer > cur.sprite.layer) {
+            topByIndex.set(idx, obj);
+            }
+        }
+
+        // draw them
+        for (const [idx, obj] of topByIndex) {
+            const cell = document.getElementById(String(idx));
+            cell.textContent = obj.sprite.symbol;
+            cell.style.color = obj.sprite.color;
+        }
+    }, 1000/game.fps)
 
     setInterval(() => {
         if (game.paused) return;
@@ -59,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         events.onCollideRegistry.forEach(collision => {
             if (typeof collision[0] == 'number') {
                 if (typeof collision[1] == 'number') {
-                    if (Vector2.toNumber(GameObject.getObjects(collision[0]).location) == Vector2.toNumber(GameObject.getObjects(collision[1]).location)) {
+                    if (GameObject.getObjects(collision[0]).location.toNumber() == GameObject.getObjects(collision[1]).location.toNumber()) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -67,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (collision[4] && collision[5]) collision[5] = false;
                 }
                 else if (typeof collision[1] == 'string') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => Vector2.toNumber(obj.location)).includes(Vector2.toNumber(GameObject.getObjects(collision[0]).location))) {
+                    if (GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => obj.location.toNumber()).includes(GameObject.getObjects(collision[0]).location.toNumber())) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -75,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (collision[4] && collision[5]) collision[5] = false;
                 }
                 else if (typeof collision[1] == 'object') {
-                    if (Vector2.toNumber(GameObject.getObjects(collision[0]).location) == Vector2.toNumber(collision[1].location)) {
+                    if (GameObject.getObjects(collision[0]).location.toNumber() == collision[1].location.toNumber()) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -85,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             else if (typeof collision[0] == 'string') {
                 if (typeof collision[1] == 'number') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => Vector2.toNumber(obj.location)).includes(Vector2.toNumber(GameObject.getObjects(collision[1]).location))) {
+                    if (GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => obj.location.toNumber()).includes(GameObject.getObjects(collision[1]).location.toNumber())) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -94,9 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 else if (typeof collision[1] == 'string') {
                     let call = false;
-                    for (const obj1 of GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => Vector2.toNumber(obj.location))) {
+                    for (const obj1 of GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => obj.location.toNumber())) {
                         let breakout = false;
-                        for (const obj2 of GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => Vector2.toNumber(obj.location))) {
+                        for (const obj2 of GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => obj.location.toNumber())) {
                             if (obj1 == obj2) {
                                 breakout = true;
                                 break;
@@ -115,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (collision[4] && collision[5]) collision[5] = false;
                 }
                 else if (typeof collision[1] == 'object') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => Vector2.toNumber(obj.location)).includes(Vector2.toNumber(collision[1].location))) {
+                    if (GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => obj.location.toNumber()).includes(collision[1].location.toNumber())) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -125,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             else if (typeof collision[0] == 'object') {
                 if (typeof collision[1] == 'number') {
-                    if (Vector2.toNumber(GameObject.getObjects(collision[1]).location) == Vector2.toNumber(collision[0].location)) {
+                    if (GameObject.getObjects(collision[1]).location.toNumber() == collision[0].location.toNumber()) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -133,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (collision[4] && collision[5]) collision[5] = false;
                 }
                 else if (typeof collision[1] == 'string') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => Vector2.toNumber(obj.location)).includes(Vector2.toNumber(collision[0].location))) {
+                    if (GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => obj.location.toNumber()).includes(collision[0].location.toNumber())) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;
@@ -141,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (collision[4] && collision[5]) collision[5] = false;
                 }
                 else if (typeof collision[1] == 'object') {
-                    if (Vector2.toNumber(collision[0].location) == Vector2.toNumber(collision[1].location)) {
+                    if (collision[0].location.toNumber() == collision[1].location.toNumber()) {
                         if (collision[4] && collision[5]) return;
                         collision[2]();
                         collision[5] = true;

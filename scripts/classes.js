@@ -1,11 +1,13 @@
 import { game } from "./game.js";
 
 export class Vector2 {
-    static toNumber = (loc) => loc.x + (loc.y-1)*game.scale[0];
-
     constructor(x, y) {
         this.x = x;
         this.y = y;
+    }
+
+    toNumber() {
+        return this.x + (this.y - 1) * game.scale[0];
     }
 }
 
@@ -55,7 +57,7 @@ export class GameObject {
         if (typeof param == 'number') return this.objects.filter(obj => obj.id == param)[0];
         else if (typeof param == 'string') return this.objects.filter(obj => obj.name == param);
         else if (typeof param == 'object') return this.objects.filter(obj => obj === param);
-    }    
+    }
 }
 
 export const hud = {
