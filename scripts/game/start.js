@@ -1,4 +1,5 @@
 import { Vector2, Sprite, GameObject, hud } from "../classes.js";
+import { game } from "../game.js";
 import * as events from "../events.js";
 
 export function start() {
@@ -17,6 +18,17 @@ export function start() {
     events.onKey.subscribe('d', () => {
         player.move(new Vector2(1, 0));
     }, false)
+
+    events.onKey.subscribe('Escape', () => {
+        if (game.paused) {
+            game.resume();
+            hud.post(`HEALTH: ${player.health.current} / ${player.health.max}`, true);
+        }
+        else {
+            game.pause();
+            hud.post(`[ PAUSED ]`, true);
+        }
+    }, false, true)
 
     hud.post(`HEALTH: ${player.health.current} / ${player.health.max}`, true);
 

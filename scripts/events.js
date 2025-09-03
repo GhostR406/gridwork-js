@@ -1,9 +1,9 @@
 export let onKeyRegistery = [];
 export const onKey = {
     id: 0,
-    subscribe: function(key, func, hold = true) {
+    subscribe: function(key, func, hold = true, unpauseable = false) {
         this.id++;
-        onKeyRegistery.push([key, func, this.id, hold, false]);
+        onKeyRegistery.push([key, func, this.id, hold, false, unpauseable]);
         return this.id;
     },
     unsubscribe: function(id) { onKeyRegistery = onKeyRegistery.filter(ev => ev[2] != id) }
@@ -12,9 +12,9 @@ export const onKey = {
 export let onMouseRegistry = [];
 export const onMouse = {
     id: 0,
-    subscribe: function(func, button = left, hold = true) {
+    subscribe: function(func, button = left, hold = true, unpauseable = false) {
         this.id++;
-        onMouseRegistry.push([func, button == 'left' ? 0 : 2, this.id, hold]);
+        onMouseRegistry.push([func, button == 'left' ? 0 : 2, this.id, hold, unpauseable]);
         return this.id;
     },
     unsubscribe: function(id) { onMouseRegistry = onMouseRegistry.filter(ev => ev[2] != id) }

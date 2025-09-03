@@ -7,7 +7,10 @@ export const game = {
     scale: [
         15,
         10
-    ]
+    ],
+    paused: false,
+    pause: () => { game.paused = true; },
+    resume: () => { game.paused = false; }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setInterval(() => {
+        if (game.paused) return;
+
         for (let i = 1; i <= game.scale[0]*game.scale[1]; i++) {
             let sprite = new Sprite('X', 'grey', -100);
 
@@ -49,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, Math.round(1000/game.fps))
 
     setInterval(() => {
+        if (game.paused) return;
+        
         events.onCollideRegistry.forEach(collision => {
             if (typeof collision[0] == 'number') {
                 if (typeof collision[1] == 'number') {
@@ -146,7 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     document.addEventListener('keydown', ({key}) => {
+        
         events.onKeyRegistery.forEach(ev => {
+            if (game.paused && !ev[5]) return;
+
             if (key == ev[0] && (!ev[3] && !ev[4])) {
                 ev[1]();
                 ev[4] = true;
@@ -165,6 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let mouseInterval = -1;
     document.addEventListener('mousedown', (mouse) => {
         events.onMouseRegistry.forEach(ev => {
+            if (game.paused && !ev[4]) return;
+
             if (!ev[3] && mouse.button == ev[1]) {
                 ev[0]();
             }
