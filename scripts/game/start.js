@@ -3,7 +3,6 @@ import { game } from "../game.js";
 import * as events from "../events.js";
 
 export function start() {
-    console.log(game.room.id)
     const player = new GameObject('player', new Sprite('0', 'lime', 0), new Vector2(3, 1), game.room.id);
     player.health = { current: 10, max: 10 };
 

@@ -46,10 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const room = game.room;
         if (!room) return;
 
-        // Handle room change (resizing grid)
         if (room.id !== roomID) {
             game.scale[0] = room.scale.width;
             game.scale[1] = room.scale.height;
+
+            if (roomID >= 0) Room.getRoom(roomID).onExit();
             roomID = room.id;
 
             const grid = document.getElementById('grid');
@@ -67,14 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const width = room.scale.width;
         const total = width * room.scale.height;
 
-        // Clear screen
         for (let i = 1; i <= total; i++) {
             const cell = document.getElementById(String(i));
             cell.textContent = 'X';
             cell.style.color = 'grey';
         }
 
-        // Draw objects by highest layer
         const topByIndex = new Map();
         for (const obj of room.objects) {
         const idx = posOf(obj, room);

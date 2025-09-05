@@ -40,7 +40,7 @@ export class Room {
 }
 
 export class GameObject {
-    static objects = []; // make sure this exists
+    static objects = [];
     static objectCount = 0;
 
     constructor(name, sprite, location, roomID = game.room.id, isSolid = false) {
@@ -69,7 +69,7 @@ export class GameObject {
 
         this.move = (delta) => {
             const moveTo = new Vector2(this.location.x + delta.x, this.location.y + delta.y);
-            this.moveTo(moveTo); // delegate to moveTo so rules are consistent
+            this.moveTo(moveTo);
         };
 
         this.delete = () => {
@@ -82,7 +82,7 @@ export class GameObject {
     }
 
     static getObjects(param) {
-        const objs = game.room.objects; // only active room
+        const objs = game.room.objects;
         if (typeof param === 'number') return objs.find(obj => obj.id === param);
         else if (typeof param === 'string') return objs.filter(obj => obj.name === param);
         else if (typeof param === 'object') return objs.find(obj => obj === param);
