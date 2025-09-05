@@ -6,8 +6,8 @@ export class Vector2 {
         this.y = y;
     }
 
-    toNumber() {
-        return this.x + (this.y - 1) * game.scale[0];
+    toNumber(width = game.room.width) {
+        return this.x + (this.y - 1) * width;
     }
 }
 
@@ -19,11 +19,34 @@ export class Sprite {
     }
 }
 
-export class GameObject {
-    static objectCount = 0;
-    static objects = [];
+export class Room {
+    static rooms = [];
+    static getRoom(id) {
+        return Room.rooms.find(room => room.id == id);
+    }
 
-    constructor(name, sprite, location, isSolid = false) {
+    constructor(name, onEnter, onExit, scale = {width: 15, height: 10}) {
+        this.name = name;
+        this.onEnter = onEnter;
+        this.onExit = onExit;
+        this.scale = scale;
+
+        this.objects = [];
+
+        this.id = Room.rooms.length;
+
+        Room.rooms.push(this);
+    }
+}
+
+export class GameObject {
+    static objects = []; // make sure this exists
+    static objectCount = 0;
+
+    constructor(name, sprite, location, roomID = game.room.id, isSolid = false) {
+        const room = Room.getRoom(roomID);
+        if (!room) return;
+
         this.name = name;
         this.sprite = sprite;
         this.location = location;
@@ -32,31 +55,38 @@ export class GameObject {
         GameObject.objectCount++;
         this.id = GameObject.objectCount;
 
-        this.moveTo = function(loc) {
-            if (loc.x < 1|| loc.x > game.scale[0]) return;
-            if (loc.y < 1|| loc.y > game.scale[1]) return;
+        this.moveTo = (loc) => {
+            if (loc.x < 1 || loc.x > room.scale.width) return;
+            if (loc.y < 1 || loc.y > room.scale.height) return;
 
-            this.location.x = loc.x;
-            this.location.y = loc.y;
-        };
-        this.move = function(loc) {
-            if (this.location.x+loc.x < 1|| this.location.x+loc.x > game.scale[0]) return;
-            if (this.location.y+loc.y < 1|| this.location.y+loc.y > game.scale[1]) return;
+            const newPos = loc.toNumber(room.scale.width);
+            if (room.objects.some(obj => obj.isSolid && obj !== this && posOf(obj, room) === newPos)) {
+                return;
+            }
 
-            this.location.x += loc.x;
-            this.location.y += loc.y;
+            this.location = loc;
         };
-        this.delete = function() {
-            GameObject.objects = GameObject.objects.filter(obj => obj != this);
-        }
-        
+
+        this.move = (delta) => {
+            const moveTo = new Vector2(this.location.x + delta.x, this.location.y + delta.y);
+            this.moveTo(moveTo); // delegate to moveTo so rules are consistent
+        };
+
+        this.delete = () => {
+            room.objects = room.objects.filter(obj => obj !== this);
+            GameObject.objects = GameObject.objects.filter(obj => obj !== this);
+        };
+
+        room.objects.push(this);
         GameObject.objects.push(this);
     }
 
     static getObjects(param) {
-        if (typeof param == 'number') return this.objects.filter(obj => obj.id == param)[0];
-        else if (typeof param == 'string') return this.objects.filter(obj => obj.name == param);
-        else if (typeof param == 'object') return this.objects.filter(obj => obj === param);
+        const objs = game.room.objects; // only active room
+        if (typeof param === 'number') return objs.find(obj => obj.id === param);
+        else if (typeof param === 'string') return objs.filter(obj => obj.name === param);
+        else if (typeof param === 'object') return objs.find(obj => obj === param);
+        return null;
     }
 }
 
@@ -65,4 +95,8 @@ export const hud = {
         if (!clear) document.getElementById('hud').innerHTML += '\n' + message;
         else if (clear) document.getElementById('hud').innerHTML = message;
     }
+}
+
+export function posOf(obj, room) {
+    return obj.location.toNumber(room.scale.width);
 }

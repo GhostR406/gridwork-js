@@ -39,5 +39,6 @@ export const onCollide = {
         onCollideRegistry.push([obj1, obj2, func, this.id, once, false]);
         return this.id;
     },
-    unsubscribe: function(id) { onCollideRegistry = onCollideRegistry.filter(ev => ev[3] != id) }
+    unsubscribe: function(id) { onCollideRegistry = onCollideRegistry.filter(ev => ev[3] != id) },
+    clear: function() { onCollideRegistry = [] }
 }

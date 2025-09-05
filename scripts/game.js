@@ -1,4 +1,4 @@
-import { Vector2, Sprite, GameObject } from "./classes.js";
+import { Vector2, Sprite, GameObject, Room, posOf } from "./classes.js";
 import * as events from "./events.js";
 import { start } from "./game/start.js";
 
@@ -13,6 +13,8 @@ export const game = {
     resume: () => { game.paused = false; }
 }
 
+let roomID = -1;
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('grid').style.gridTemplateColumns = `repeat(${game.scale[0]}, 1fr)`;
     document.getElementById('grid').style.gridTemplateRows = 'auto';
@@ -25,148 +27,141 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(`${i}`).addEventListener('click', () => {
             events.onClickRegistry.forEach(ev => {
                 if (typeof ev[0] == 'number') {
-                    if (i == GameObject.getObjects(ev[0]).location.toNumber()) ev[1]();
+                    if (i == GameObject.getObjects(ev[0]).location.toNumber(room.scale.width)) ev[1]();
                 }
                 else if (typeof ev[0] == 'string') {
-                    if (GameObject.getObjects(ev[0]).map(obj => obj.location.toNumber()).includes(i)) ev[1]();
+                    if (GameObject.getObjects(ev[0]).map(obj => obj.location.toNumber(room.scale.width)).includes(i)) ev[1]();
                 }
                 else if (ev[0].x != undefined && ev[0].y != undefined) {
-                    if (i == ev[0].toNumber()) ev[1]();
+                    if (i == ev[0].toNumber(room.scale.width)) ev[1]();
                 }
                 else if (typeof ev[0] == 'object') {
-                    if (i == ev[0].location.toNumber()) ev[1]();
+                    if (i == ev[0].location.toNumber(room.scale.width)) ev[1]();
                 }
             })
         })
     }
 
     setInterval(() => {
-        const width = game.scale[0];
-        const total = width * game.scale[1];
+        const room = game.room;
+        if (!room) return;
 
-        // clear to default
+        // Handle room change (resizing grid)
+        if (room.id !== roomID) {
+            game.scale[0] = room.scale.width;
+            game.scale[1] = room.scale.height;
+            roomID = room.id;
+
+            const grid = document.getElementById('grid');
+            grid.innerHTML = "";
+            grid.style.gridTemplateColumns = `repeat(${room.scale.width}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${room.scale.height}, 1fr)`;
+
+            for (let i = 1; i <= room.scale.width * room.scale.height; i++) {
+                grid.insertAdjacentHTML("beforeend", `<div class="cell" id="${i}"></div>`);
+            }
+
+            room.onEnter();
+        }
+
+        const width = room.scale.width;
+        const total = width * room.scale.height;
+
+        // Clear screen
         for (let i = 1; i <= total; i++) {
             const cell = document.getElementById(String(i));
             cell.textContent = 'X';
             cell.style.color = 'grey';
         }
 
-        // choose top object per cell
-        const topByIndex = new Map(); // index -> obj
-        for (const obj of GameObject.objects) {
-            const idx = obj.location.toNumber(width);
-            const cur = topByIndex.get(idx);
-            if (!cur || obj.sprite.layer > cur.sprite.layer) {
+        // Draw objects by highest layer
+        const topByIndex = new Map();
+        for (const obj of room.objects) {
+        const idx = posOf(obj, room);
+        const cur = topByIndex.get(idx);
+        if (!cur || obj.sprite.layer > cur.sprite.layer) {
             topByIndex.set(idx, obj);
-            }
         }
+    }
 
-        // draw them
         for (const [idx, obj] of topByIndex) {
             const cell = document.getElementById(String(idx));
             cell.textContent = obj.sprite.symbol;
             cell.style.color = obj.sprite.color;
         }
-    }, 1000/game.fps)
+    }, 1000 / game.fps);
 
     setInterval(() => {
-        if (game.paused) return;
-        
+        if (game.paused || !game.room) return;
+        const room = game.room;
+        const width = room.scale.width;
+
+        const posOf = obj => obj.location.toNumber(width);
+
+        const positionsOfName = name =>
+            room.objects.filter(obj => obj.name === name).map(obj => posOf(obj, room));
+
         events.onCollideRegistry.forEach(collision => {
-            if (typeof collision[0] == 'number') {
-                if (typeof collision[1] == 'number') {
-                    if (GameObject.getObjects(collision[0]).location.toNumber() == GameObject.getObjects(collision[1]).location.toNumber()) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
+            let [a, b, callback, , once, triggered] = collision;
+            let call = false;
+
+            if (typeof a === "number") {
+                const objA = GameObject.getObjects(a);
+                if (!objA) return;
+
+                if (typeof b === "number") {
+                    const objB = GameObject.getObjects(b);
+                    if (objB && posOf(objA, room) === posOf(objB, room)) call = true;
+
+                } else if (typeof b === "string") {
+                    if (positionsOfName(b).includes(posOf(objA, room))) call = true;
+
+                } else if (b?.location) {
+                    if (posOf(objA, room) === posOf(b, room)) call = true;
                 }
-                else if (typeof collision[1] == 'string') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => obj.location.toNumber()).includes(GameObject.getObjects(collision[0]).location.toNumber())) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
+
+            } else if (typeof a === "string") {
+                const objsA = positionsOfName(a);
+
+                if (typeof b === "number") {
+                    const objB = GameObject.getObjects(b);
+                    if (objB && objsA.includes(posOf(objB, room))) call = true;
+
+                } else if (typeof b === "string") {
+                    const objsB = positionsOfName(b);
+                    if (objsA.some(idx => objsB.includes(idx))) call = true;
+
+                } else if (b?.location) {
+                    if (objsA.includes(posOf(b, room))) call = true;
                 }
-                else if (typeof collision[1] == 'object') {
-                    if (GameObject.getObjects(collision[0]).location.toNumber() == collision[1].location.toNumber()) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
-                }
-            }
-            else if (typeof collision[0] == 'string') {
-                if (typeof collision[1] == 'number') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => obj.location.toNumber()).includes(GameObject.getObjects(collision[1]).location.toNumber())) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
-                }
-                else if (typeof collision[1] == 'string') {
-                    let call = false;
-                    for (const obj1 of GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => obj.location.toNumber())) {
-                        let breakout = false;
-                        for (const obj2 of GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => obj.location.toNumber())) {
-                            if (obj1 == obj2) {
-                                breakout = true;
-                                break;
-                            }
-                        }
-                        if (breakout) {
-                            call = true;
-                            break;
-                        }
-                    }
-                    if (call) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
-                }
-                else if (typeof collision[1] == 'object') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[0]).map(obj => obj.location.toNumber()).includes(collision[1].location.toNumber())) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
+
+            } else if (a?.location) {
+                const idxA = posOf(a, room);
+
+                if (typeof b === "number") {
+                    const objB = GameObject.getObjects(b);
+                    if (objB && idxA === posOf(objB, room)) call = true;
+
+                } else if (typeof b === "string") {
+                    if (positionsOfName(b).includes(idxA)) call = true;
+
+                } else if (b?.location) {
+                    if (idxA === posOf(b, room)) call = true;
                 }
             }
-            else if (typeof collision[0] == 'object') {
-                if (typeof collision[1] == 'number') {
-                    if (GameObject.getObjects(collision[1]).location.toNumber() == collision[0].location.toNumber()) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
-                }
-                else if (typeof collision[1] == 'string') {
-                    if (GameObject.objects.filter(obj => obj.name == collision[1]).map(obj => obj.location.toNumber()).includes(collision[0].location.toNumber())) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
-                }
-                else if (typeof collision[1] == 'object') {
-                    if (collision[0].location.toNumber() == collision[1].location.toNumber()) {
-                        if (collision[4] && collision[5]) return;
-                        collision[2]();
-                        collision[5] = true;
-                    }
-                    else if (collision[4] && collision[5]) collision[5] = false;
-                }
+
+            if (call) {
+                if (once && triggered) return;
+                callback();
+                collision[5] = true;
+            } else if (once && triggered) {
+                collision[5] = false;
             }
-        })
-    })
+
+            
+
+        });
+    }, 1000 / game.fps);
 
     document.addEventListener('keydown', ({key}) => {
         
@@ -213,5 +208,5 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
     
-    start();
+    game.room = new Room('main', () => { start(); }, () => {}, { width: 15, height: 10})
 })
