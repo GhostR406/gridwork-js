@@ -4,10 +4,10 @@ export class Vector2 {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-    }
 
-    toNumber(width = game.room.width) {
-        return this.x + (this.y - 1) * width;
+        this.toNumber = function(width = game.room.scale.width) {
+            return this.x + (this.y - 1) * width;
+        }
     }
 }
 

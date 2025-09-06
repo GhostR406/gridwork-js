@@ -30,7 +30,11 @@ export function start() {
         }
     }, false, true)
 
-    events.onCollide.clear();
+    events.onClick.subscribe(player.id, () => {
+        console.log('b')
+        hud.post('Clicked', true);
+    })
+
     events.onCollide.subscribe(player, 'trapdoor', () => {
         if (!Room.getRoom(1)) {
             new Room('a', loopBack, () => {}, { width: 10, height: 10 });

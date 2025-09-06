@@ -1,12 +1,13 @@
-export let onKeyRegistery = [];
+export let onKeyRegistry = [];
 export const onKey = {
     id: 0,
     subscribe: function(key, func, hold = true, unpauseable = false) {
         this.id++;
-        onKeyRegistery.push([key, func, this.id, hold, false, unpauseable]);
+        onKeyRegistry.push([key, func, this.id, hold, false, unpauseable]);
         return this.id;
     },
-    unsubscribe: function(id) { onKeyRegistery = onKeyRegistery.filter(ev => ev[2] != id) }
+    unsubscribe: function(id) { onKeyRegistry = onKeyRegistry.filter(ev => ev[2] != id) },
+    clear: function() { onKeyRegistry = [] }
 }
 
 export let onMouseRegistry = [];
@@ -17,7 +18,8 @@ export const onMouse = {
         onMouseRegistry.push([func, button == 'left' ? 0 : 2, this.id, hold, unpauseable]);
         return this.id;
     },
-    unsubscribe: function(id) { onMouseRegistry = onMouseRegistry.filter(ev => ev[2] != id) }
+    unsubscribe: function(id) { onMouseRegistry = onMouseRegistry.filter(ev => ev[2] != id) },
+    clear: function() { onMouseRegistry = [] }
 }
 
 export let onClickRegistry = [];
@@ -28,7 +30,8 @@ export const onClick = {
         onClickRegistry.push([obj, func, this.id]);
         return this.id;
     },
-    unsubscribe: function(id) { onClickRegistry = onClickRegistry.filter(ev => ev[2] != id) }
+    unsubscribe: function(id) { onClickRegistry = onClickRegistry.filter(ev => ev[2] != id) },
+    clear: function() { onClickRegistry = [] }
 }
 
 export let onCollideRegistry = [];

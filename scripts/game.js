@@ -27,16 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(`${i}`).addEventListener('click', () => {
             events.onClickRegistry.forEach(ev => {
                 if (typeof ev[0] == 'number') {
-                    if (i == GameObject.getObjects(ev[0]).location.toNumber(room.scale.width)) ev[1]();
+                    if (i == GameObject.getObjects(ev[0]).location.toNumber()) ev[1]();
                 }
                 else if (typeof ev[0] == 'string') {
-                    if (GameObject.getObjects(ev[0]).map(obj => obj.location.toNumber(room.scale.width)).includes(i)) ev[1]();
+                    if (GameObject.getObjects(ev[0]).map(obj => obj.location.toNumber()).includes(i)) ev[1]();
                 }
                 else if (ev[0].x != undefined && ev[0].y != undefined) {
-                    if (i == ev[0].toNumber(room.scale.width)) ev[1]();
+                    if (i == ev[0].toNumber()) ev[1]();
                 }
                 else if (typeof ev[0] == 'object') {
-                    if (i == ev[0].location.toNumber(room.scale.width)) ev[1]();
+                    if (i == ev[0].location.toNumber()) ev[1]();
                 }
             })
         })
@@ -53,6 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (roomID >= 0) Room.getRoom(roomID).onExit();
             roomID = room.id;
 
+            events.onClick.clear();
+            events.onKey.clear();
+            events.onMouse.clear();
+            events.onCollide.clear();
+
             const grid = document.getElementById('grid');
             grid.innerHTML = "";
             grid.style.gridTemplateColumns = `repeat(${room.scale.width}, 1fr)`;
@@ -60,6 +65,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let i = 1; i <= room.scale.width * room.scale.height; i++) {
                 grid.insertAdjacentHTML("beforeend", `<div class="cell" id="${i}"></div>`);
+
+                document.getElementById(`${i}`).addEventListener('click', () => {
+                    events.onClickRegistry.forEach((ev) => {
+                        if (typeof ev[0] == 'number') {
+                            if (i == GameObject.getObjects(ev[0]).location.toNumber()) {
+                                console.log('a');
+                                ev[1]();
+                            }
+                        }
+                        else if (typeof ev[0] == 'string') {
+                            if (GameObject.getObjects(ev[0]).map(obj => obj.location.toNumber()).includes(i)) ev[1]();
+                        }
+                        else if (ev[0].x != undefined && ev[0].y != undefined) {
+                            if (i == ev[0].toNumber()) ev[1]();
+                        }
+                        else if (typeof ev[0] == 'object') {
+                            if (i == ev[0].location.toNumber()) ev[1]();
+                        }
+                    })
+                })
             }
 
             room.onEnter();
@@ -164,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', ({key}) => {
         
-        events.onKeyRegistery.forEach(ev => {
+        events.onKeyRegistry.forEach(ev => {
             if (game.paused && !ev[5]) return;
 
             if (key == ev[0] && (!ev[3] && !ev[4])) {
@@ -177,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
     document.addEventListener('keyup', () => {
-        events.onKeyRegistery.forEach(ev => { ev[4] = false; })
+        events.onKeyRegistry.forEach(ev => { ev[4] = false; })
     })
 
     document.addEventListener('contextmenu', event => event.preventDefault());
