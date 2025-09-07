@@ -85,6 +85,7 @@ export class GameObject {
         const objs = game.room.objects;
         if (typeof param === 'number') return objs.find(obj => obj.id === param);
         else if (typeof param === 'string') return objs.filter(obj => obj.name === param);
+        else if (param.x != undefined && param.y != undefined) return objs.filter(obj => obj.location.x === param.x && obj.location.y === param.y);
         else if (typeof param === 'object') return objs.find(obj => obj === param);
         return null;
     }
